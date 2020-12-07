@@ -34,6 +34,7 @@ public abstract class Product implements Serializable{
     public int getCriticalValue() { return _criticalValue; }
     public int getStock() {return _stock; }
     public Notification getNotification() { return _notification; }
+    public String getNameMode() { return this.getClass().getSimpleName() + "Mode"; }
 
 /////////////////////////////////////////////// OTHER FUNCTIONS ////////////////////////////////////////////////////
 

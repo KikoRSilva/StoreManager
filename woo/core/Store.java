@@ -3,11 +3,11 @@ package woo.core;
 //FIXME import classes (cannot import from pt.tecnico or woo.app)
 import java.io.Serializable;
 
-
 import java.util.List;
 
 import java.util.ArrayList;
 
+import woo.core.Payments.*;
 import woo.core.exception.*;
 
 import java.io.IOException;
@@ -19,14 +19,15 @@ public class Store implements Serializable {
   /** Serial number for serialization. */
   private static final long serialVersionUID = 202009192006L;
 
-  private int _availableBalance;
-  private int accountingBalance;
+  private double _availableBalance;
+  private double _accountingBalance;
   private List<Client> _clients;
   private List<Supplier> _suppliers;
   private List<Product> _products;
   private List<Sale> _sales;
   private int _date;
   private List<Notification> _notifications;
+  private List<Transaction> _transactions;
 
   public Store() {
 
@@ -34,6 +35,7 @@ public class Store implements Serializable {
     _suppliers = new ArrayList<Supplier>();
     _products = new ArrayList<Product>();
     _notifications = new ArrayList<Notification>();
+    _transactions = new ArrayList<Transaction>();
     _date = 0; // dispensavel por so para ter a certeza
   };
 
@@ -155,7 +157,8 @@ public class Store implements Serializable {
       throw new DeniedSaleException("Not enough stock!");
     else {
       Sale s = new Sale(c, deadline, p, amount);
-      _sales.add(s);
+      _transactions.add(s);
+      // update saldo contabilistico !!!!!!!!
     }
   }
 
@@ -222,8 +225,26 @@ public class Store implements Serializable {
     throw new UnknownProductException("That product does not exist.");
   }
 
-  public int getProductStock(String id) throws UnknownProductException {
-    return getProduct(id).getStock();
+  public int getProductStock(String id) {
+    for (Product p : _products)
+      if (p.getId().equals(id))
+        return p.getStock();
+    return 0;
+  }
+
+  public Transaction getTransaction(int id) throws UnknownTransactionException {
+    for (Transaction t : _transactions) {
+      if (t.getId() == id)
+        return t;
+    }
+    throw new UnknownTransactionException("That transaction does not exists.");
+  }
+
+  public String getTProductName(int id) {
+    for (Transaction t : _transactions)
+      if (t.getId() == id)
+        return t.getProduct().getId();
+    return null;
   }
 
   /////////////////////////////////////////////// PARSING FUNCTIONS ////////////////////////////////////////////////////
@@ -376,8 +397,28 @@ public class Store implements Serializable {
     n.sendNotification(description, idProduct, price);
   }
 
+  public void pay(int id) throws UnknownTransactionException, UnknownProductException {
 
+    Sale t = (Sale) getTransaction(id);
+    Product p = t.getProduct();
 
+    switch(p.getNameMode()) {
+      case "BookMode":
+        t.setMode(new BookMode());
+        break;
+      case "BoxMode":
+        t.setMode(new BoxMode());
+        break;
+      case "ContainerMode":
+        t.setMode(new ContainerMode());
+        break;
+      default:
+        throw new UnknownProductException("This product does not exists.");
+    }
+    double toPay = t.pay();
+    _availableBalance += toPay;
+    
+  }
 
   // FIXME define methods
 

@@ -148,8 +148,11 @@ public class StoreManager {
   
   public List<Supplier> getAllSuppliers() { return _store.getAllSuppliers(); }
 
-  public int getProductAmountAvailable(String pid) throws UnknownProductException{ return _store.getProductStock(pid); }
+  public int getProductAmountAvailable(String pid) { return _store.getProductStock(pid); }
 
+  public Transaction getTransaction(int id) throws UnknownTransactionException { return _store.getTransaction(id); }
+  
+  public String getTProductName(int id) {return _store.getTProductName(id); }
   /////////////////////////////////////////////// OTHER FUNCTIONS ////////////////////////////////////////////////////
   /**
    * @param numberOfDays - days to advance to the current date
@@ -165,5 +168,9 @@ public class StoreManager {
 
   public void clearClientNotifications(String id) throws UnknownClientException {
     _store.clearClientNotifications(id);
+  }
+
+  public void pay(int id) throws UnknownTransactionException, UnknownProductException {
+    _store.pay(id);
   }
 }

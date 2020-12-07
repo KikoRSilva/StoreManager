@@ -22,4 +22,12 @@ public class Order extends Transaction{
             _totalCost += _products.get(i).getPrice() * _quantities.get(i);
         }
     }
+
+    public String toString() {
+        return null;
+    }
+
+    public Product getProduct() {
+        return null;
+    }
 }
