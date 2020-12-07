@@ -7,6 +7,7 @@ import woo.app.exception.UnavailableProductException;
 import woo.app.exception.UnknownClientKeyException;
 import woo.app.exception.UnknownProductKeyException;
 import woo.core.StoreManager;
+import woo.core.exception.DeniedSaleException;
 //FIXME import other classes
 import woo.core.exception.UnknownClientException;
 import woo.core.exception.UnknownProductException;
@@ -28,17 +29,15 @@ public class DoRegisterSaleTransaction extends Command<StoreManager> {
     _deadline = _form.addIntegerInput(Message.requestPaymentDeadline());
     _productID = _form.addStringInput(Message.requestProductKey());
     _amount = _form.addIntegerInput(Message.requestAmount());
-    //FIXME init input fields
   }
 
   @Override
   public final void execute() throws DialogException {
-    //FIXME implement command
     _form.parse();
     try {
       _receiver.registerSale(_clientID.value(), _deadline.value(), _productID.value(), _amount.value());
-      int available = _receiver.getProductAmountAvailable(_productID.value());
     } catch (DeniedSaleException e) {
+      int available = _receiver.getProductAmountAvailable(_productID.value());
       throw new UnavailableProductException(_productID.value(), _amount.value(), available);
     } catch (UnknownClientException e) {
       throw new UnknownClientKeyException(_clientID.value());
