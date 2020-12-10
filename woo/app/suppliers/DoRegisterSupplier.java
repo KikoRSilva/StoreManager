@@ -5,9 +5,7 @@ import pt.tecnico.po.ui.DialogException;
 import pt.tecnico.po.ui.Input;
 import woo.app.exception.DuplicateSupplierKeyException;
 import woo.core.StoreManager;
-import pt.tecnico.po.ui.Form;
-import woo.core.Supplier;
-import woo.core.exception.*;
+import woo.core.exception.DuplicateSupplierException;
 
 /**
  * Register supplier.
@@ -32,11 +30,8 @@ public class DoRegisterSupplier extends Command<StoreManager> {
     _form.parse();
     
     try {
-
       _receiver.registerSupplier(_supplierKey.value(), _supplierName.value(), _supplierAddress.value());
-
     } catch (DuplicateSupplierException e) {
-
       throw new DuplicateSupplierKeyException(_supplierKey.value());
     }
   }

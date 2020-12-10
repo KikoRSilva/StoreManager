@@ -17,7 +17,6 @@ import woo.core.exception.UnknownProductException;
  */
 public class DoRegisterSaleTransaction extends Command<StoreManager> {
 
-  //FIXME add input fields
   private Input<String> _clientID;
   private Input<Integer> _deadline;
   private Input<String> _productID;
@@ -45,5 +44,4 @@ public class DoRegisterSaleTransaction extends Command<StoreManager> {
       throw new UnknownProductKeyException(_productID.value());
     }
   }
-
 }

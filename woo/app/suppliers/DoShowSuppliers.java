@@ -27,12 +27,11 @@ public class DoShowSuppliers extends Command<StoreManager> {
     _allSuppliers = _receiver.getAllSuppliers();
 
     for (Supplier s : _allSuppliers) {
-      if (s.getAuthorization())
+      if (s.isAuthorized())
         _display.addLine(s.toString() + Message.yes());
       else
         _display.addLine(s.toString() + Message.no());
     }
-
     _display.display();
   }
 }

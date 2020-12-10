@@ -30,8 +30,7 @@ public class DoPay extends Command<StoreManager> {
     } catch (UnknownTransactionException e) {
       throw new UnknownTransactionKeyException(_saleID.value());
     } catch (UnknownProductException e) {
-      String prodKey = _receiver.getTProductName(_saleID.value());
-	    throw new UnknownProductKeyException(prodKey);
+	    throw new UnknownProductKeyException(e.getKey());
     }
   }
 }
