@@ -36,11 +36,11 @@ public class DoShowClient extends Command<StoreManager> {
     try {
 
       Client c = _receiver.getClient(_clientKey.value());
-      List<String> notifications = c.getNotifications();
+      List<Notification> notifications = c.getNotifications();
 
       _display.addLine(c.toString());
-      for (String n : notifications) {
-        _display.addLine(n);
+      for (Notification n : notifications) {
+        _display.addLine(n.toString());
       }
       _display.display();
 
