@@ -5,11 +5,9 @@ import java.util.ArrayList;
 
 import pt.tecnico.po.ui.Command;
 import pt.tecnico.po.ui.DialogException;
-import pt.tecnico.po.ui.Input;
 
 import woo.core.StoreManager;
 import woo.core.Product;
-//FIXME import other classes
 
 /**
  * Show all products.
@@ -26,15 +24,10 @@ public class DoShowAllProducts extends Command<StoreManager> {
 
   @Override
   public final void execute() throws DialogException {
-    
     _products = _receiver.getAllProducts();
-
     for (Product i : _products) {
-
     	_display.addLine(i.toString());
-
     }
     _display.display();
   }
-
 }
