@@ -1,6 +1,6 @@
 package woo.core;
 
-public class Box extends Product{
+public class Box extends Product {
     
     /**
      *
@@ -17,6 +17,7 @@ public class Box extends Product{
     /////////////////////////////////////////////// GETTERS FUNCTIONS ////////////////////////////////////////////////////
     public String getType() { return _type; }
 
+    public String getNameMode() { return "BoxMode"; }
     /////////////////////////////////////////////// OTHER FUNCTIONS ////////////////////////////////////////////////////
     public String toString() {
     	return "BOX" + " | " + super.getId() + " | " + super.getSupplier().getId() + " | " + super.getPrice() + " | " + super.getCriticalValue() + " | " + super.getStock() + " | " + getType();

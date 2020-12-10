@@ -18,9 +18,9 @@ public class Container extends Box{
     /////////////////////////////////////////////// GETTERS FUNCTIONS ////////////////////////////////////////////////////
     public String getQualitylevel() { return _qualityLevel; }
 
+    public String getNameMode() { return "ContainerMode"; }
     /////////////////////////////////////////////// OTHER FUNCTIONS ////////////////////////////////////////////////////
     public String toString() {
     	return "CONTAINER" + " | " + super.getId() + " | " + super.getSupplier().getId() + " | " + super.getPrice() + " | " + super.getCriticalValue() + " | " + super.getStock() + " | " + super.getType() + " | " + getQualitylevel();
-
     }
 }

@@ -1,32 +1,22 @@
 package woo.core.Payments;
 
 import woo.core.Client;
+import woo.core.clientClassification;
 import woo.core.interfaces.PaymentMode;
 
 public class BoxMode implements PaymentMode {
 
-    // private int _n = 5;
-    // private int _date;
-    // private int _deadline;
-    // private Client _client;
-    // private double _baseValue;
-    // private double _toPayValue;
-
-    // public BoxMode(Client c, int baseValue, int date, int deadline) {
-    //     _date = date;
-    //     _deadline = deadline;
-    //     _client = c;
-    //     _baseValue = baseValue;
-    // }
 
     public double computePayment(Client c, double baseValue, int date, int deadline) {
+        int n = 5;
         int x = deadline - date;
         int y = date - deadline;
-        double toPayValue = 0;
-
-        if (x >= 5)
+        double toPayValue = baseValue;
+        
+        if (x >= n)
             toPayValue = baseValue - 0.10 * baseValue;
-        if (0 <= x && 5 > x) {
+            c.addPoints(toPayValue * 10);
+        if (0 <= x && n > x) {
             if (c.getClassification().equals("ELITE"))
                 toPayValue = baseValue - 0.10 * baseValue;
             if (c.getClassification().equals("SELECTION") && x >= 2)
@@ -34,8 +24,9 @@ public class BoxMode implements PaymentMode {
             else if (c.getClassification().equals("SELECTION") || c.getClassification().equals("NORMAL")){
                 toPayValue = baseValue;
             } 
+            c.addPoints(toPayValue * 10);
         }
-        if (0 < y && 5 >= y) {
+        if (0 < y && n >= y) {
             if (c.getClassification().equals("ELITE"))
                 toPayValue = baseValue - 0.05 * baseValue;
             if (c.getClassification().equals("NORMAL")) {
@@ -46,7 +37,7 @@ public class BoxMode implements PaymentMode {
                     toPayValue = baseValue;
                 toPayValue = baseValue + baseValue * 0.02 * y;
         }
-        if (y > 5) {
+        if (y > n) {
             if (c.getClassification().equals("ELITE"))
                 toPayValue = baseValue;
             if (c.getClassification().equals("NORMAL"))
@@ -54,6 +45,17 @@ public class BoxMode implements PaymentMode {
             if (c.getClassification().equals("SELECTION"))
                 toPayValue = baseValue + 0.05 * baseValue * y;
         }
+        if (y > 2 && c.getClassification().equals("SELECTION")) {
+            double toRemove = c.getPoints() * 0.9;
+            c.removePoints(toRemove);
+            c.setClassification(clientClassification.NORMAL);
+        }
+        if (y > 15 && c.getClassification().equals("ELITE")) {
+            double toRemove = c.getPoints() * 0.75;
+            c.removePoints(toRemove);
+            c.setClassification(clientClassification.SELECTION);
+        }
         return toPayValue;
     } 
 }
+

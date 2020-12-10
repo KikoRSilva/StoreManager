@@ -13,9 +13,6 @@ public class Sale extends Transaction {
     private double _toPayValue;
     private boolean _wasPaid;
     private PaymentMode _PaymentMode;
-    /**
-     *
-     */
     private static final long serialVersionUID = 7352783027728283802L;
     
     public Sale(Client c, int deadline, Product p, int amount) {
@@ -50,6 +47,8 @@ public class Sale extends Transaction {
     public int getDeadline() { return _deadline; }
     public int getDate() { return _date; }
     public double getBaseValue() { return _baseValue; }
+    public boolean wasPaid() { return _wasPaid; }
+    public double getToPayValue() { return _toPayValue; }
     
     public void setToPayValue(double v) {  _toPayValue = v; }
     

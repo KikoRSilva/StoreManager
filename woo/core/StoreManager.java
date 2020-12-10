@@ -1,13 +1,13 @@
 package woo.core;
 
-import java.io.IOException;
 import java.util.List;
+import java.util.TreeMap;
+import java.io.IOException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
 import woo.core.exception.*;
 
 /**
@@ -67,15 +67,10 @@ public class StoreManager {
     ObjectInputStream objIn = null;
 
     try {
-
       objIn = new ObjectInputStream(new FileInputStream(_filename));
       _store = (Store)objIn.readObject();
-      
-    
     } finally {
-
       if (objIn != null)
-
         objIn.close();
     }
   }
@@ -87,7 +82,7 @@ public class StoreManager {
   public void importFile(String textfile) throws ImportFileException {
     try {
       _store.importFile(textfile);
-    } catch (IOException | BadEntryException /* FIXME maybe other exceptions */ e) {
+    } catch (IOException | BadEntryException e) {
       throw new ImportFileException(textfile);
     }
   }
@@ -130,7 +125,9 @@ public class StoreManager {
     _store.registerSale(cid, deadline, pid, amount);
   }
 
-
+  public void registerOrder(String sid, TreeMap<Product, Integer> products) throws UnknownSupplierException, WrongSupException, UnauthorizedSupException {
+    _store.registerOrder(sid, products);
+  }
   /////////////////////////////////////////////////// GETTERS FUNCTIONS /////////////////////////////////////////////
   /**
    * @param id - id of the client
@@ -152,7 +149,20 @@ public class StoreManager {
 
   public Transaction getTransaction(int id) throws UnknownTransactionException { return _store.getTransaction(id); }
   
-  public String getTProductName(int id) {return _store.getTProductName(id); }
+  public Product getProduct(String id) throws UnknownProductException { return _store.getProduct(id); }
+  
+  public List<Order> getAllSupplierTransactions(String id) { return _store.getAllSupplierTransactions(id); }
+  
+  public List<Sale> getAllClientTransactions(String id) { return _store.getAllClientTransactions(id); }
+  
+  public List<Sale> getPaidSales(String id) { return _store.getPaidSales(id); }
+
+  public List<Product> getProductsUnderLimitOf(int i) { return _store.getProductsUnderLimitOf(i); }
+  
+  public double getAvailableBalance() { return _store.getAvailableBalance(); }
+
+  public double getAccountingBalance() { return _store.getAccountingBalance(); }
+  
   /////////////////////////////////////////////// OTHER FUNCTIONS ////////////////////////////////////////////////////
   /**
    * @param numberOfDays - days to advance to the current date
@@ -173,4 +183,8 @@ public class StoreManager {
   public void pay(int id) throws UnknownTransactionException, UnknownProductException {
     _store.pay(id);
   }
+
+  public boolean toggleTransactions(String id) throws UnknownSupplierException { return _store.toggleTransactions(id); }
+
+  public boolean toggleNotifications(String clientID, String productID) throws UnknownClientException, UnknownProductException { return _store.toggleNotifications(clientID, productID); }
 }

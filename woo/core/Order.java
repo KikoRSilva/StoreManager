@@ -1,33 +1,29 @@
 package woo.core;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class Order extends Transaction{
     
     private static final long serialVersionUID = -7654239663652491878L;
     
     private Supplier _supplier;
-    private List<Product> _products;
-    private List<Integer> _quantities;
-    private int _totalCost;
+    private Map<Product, Integer> _products = new TreeMap<Product, Integer>();
+    private double _totalCost;
+    private int _date;
 
-    public Order(Supplier s, Product p, int quantity) {
+    public Order(Supplier s, TreeMap<Product, Integer> products, int date) {
         super();
         _supplier = s;
-        List<Product> _products = new ArrayList<Product>();
-        List<Integer> _quantities = new ArrayList<Integer>();
-
-        for(int i = 0; i < _products.size(); i++) {
-            _totalCost += _products.get(i).getPrice() * _quantities.get(i);
+        for(Map.Entry<Product, Integer> e : products.entrySet()) {
+            _totalCost += e.getKey().getPrice() * e.getValue();
         }
+        _date = date;
     }
-
+    public double getTotalCost() { return _totalCost; }
     public String toString() {
-        return null;
+        return super.getId() + " | " + _supplier.getId() + " | " + Math.round(_totalCost) + " | " + _date;
     }
 
-    public Product getProduct() {
-        return null;
-    }
+    public Map<Product, Integer> getAllProducts() { return _products; }
 }

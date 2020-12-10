@@ -26,6 +26,7 @@ public class Book extends Product{
     
     public String getISBN() { return _ISBN; }
 
+    public String getNameMode() { return "BookMode"; }
     /////////////////////////////////////////////// OTHERS FUNCTIONS ////////////////////////////////////////////////////
     public String toString() {
         return "BOOK" + " | " + super.getId() + " | " + super.getSupplier().getId() + " | " + super.getPrice() + " | " + super.getCriticalValue() + " | " + super.getStock() + " | " + getTitle() + " | " + getAuthor() + " | " + getISBN();

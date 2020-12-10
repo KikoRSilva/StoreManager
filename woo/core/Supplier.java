@@ -1,10 +1,8 @@
 package woo.core;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 
 public class Supplier implements Serializable{
-    
     /**
      *
      */
@@ -13,15 +11,12 @@ public class Supplier implements Serializable{
     private String _id;
     private String _name;
     private String _address;
-    private Product[] _products;
-    private Transaction[] _transactions;
     private Boolean _isAuthorized;
 
     public Supplier(String key, String name, String address){
         _id = key;
         _name = name;
         _address = address;
-        ArrayList<Product> _products = new ArrayList<Product>();
         _isAuthorized = true;
     }
 
@@ -33,11 +28,11 @@ public class Supplier implements Serializable{
 
     public String getAddress() { return _address; }
 
-    public Boolean getAuthorization() { return _isAuthorized; }
+    public Boolean isAuthorized() { return _isAuthorized; }
 
 ///////////////////////////////////////////// OTHERS FUNCTION ////////////////////////////////////////////
-    public String toString() {
-        return getId() + " | " + getName() + " | " + getAddress() + " | ";
-    }
+    public String toString() { return getId() + " | " + getName() + " | " + getAddress() + " | "; }
+
+    public void toggleAuthorization() { _isAuthorized = !_isAuthorized; }
 
 }

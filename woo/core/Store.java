@@ -1,10 +1,10 @@
 package woo.core;
 
-//FIXME import classes (cannot import from pt.tecnico or woo.app)
 import java.io.Serializable;
 
 import java.util.List;
-
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.ArrayList;
 
 import woo.core.Payments.*;
@@ -24,10 +24,11 @@ public class Store implements Serializable {
   private List<Client> _clients;
   private List<Supplier> _suppliers;
   private List<Product> _products;
-  private List<Sale> _sales;
+  private Map<String, List<Sale>> _sales;
+  private Map<String, List<Order>> _orders;
   private int _date;
+  private Map<Product, List<Client>> _interestedClients;
   private List<Notification> _notifications;
-  private List<Transaction> _transactions;
 
   public Store() {
 
@@ -35,10 +36,11 @@ public class Store implements Serializable {
     _suppliers = new ArrayList<Supplier>();
     _products = new ArrayList<Product>();
     _notifications = new ArrayList<Notification>();
-    _transactions = new ArrayList<Transaction>();
+    _interestedClients = new TreeMap<Product, List<Client>>();
+    _sales = new TreeMap<String, List<Sale>>(String.CASE_INSENSITIVE_ORDER);
+    _orders = new TreeMap<String, List<Order>>(String.CASE_INSENSITIVE_ORDER);
     _date = 0; // dispensavel por so para ter a certeza
   };
-
 
   /////////////////////////////////// REGISTER FUNCTIONS /////////////////////////////////////////////////
   /**
@@ -50,17 +52,15 @@ public class Store implements Serializable {
   public void registerClient(String id, String name, String address) throws DuplicateClientException {
 
     for (Client i : _clients){
-
       if (i.getId().equals(id)) 
         throw new DuplicateClientException("Client already exists.");
     }
 
     Client a = new Client(id, name, address);
     _clients.add(a);
-    
-    for(Product p : _products) {
-      p.getNotification().getClients().add(a);
-    }
+
+    for (Map.Entry<Product, List<Client>> e : _interestedClients.entrySet()) 
+      e.getValue().add(a);
   }
 
   /**
@@ -70,13 +70,10 @@ public class Store implements Serializable {
    * @throws DuplicateSupplierException
    */
   public void registerSupplier(String id, String name, String address) throws DuplicateSupplierException {
-
     for (Supplier i : _suppliers) {
-
       if (i.getId().equals(id)) 
         throw new DuplicateSupplierException("Supplier already exists.");
     }
-
     Supplier a = new Supplier(id, name, address);
     _suppliers.add(a);
   }
@@ -94,16 +91,14 @@ public class Store implements Serializable {
 
     Supplier s = getSupplier(idSupplier);
 
+    if (price < 0)
+      throw new InvalidPriceException("Price must be an Integer positive.");
+
     for (serviceType i : serviceType.values() ) {
-
       if (servType.equals(i.toString())) {
-
-        if (price < 0)
-          throw new InvalidPriceException("Price must be an Integer positive.");
-
         Box a = new Box(id, price, criticalValue, s, servType);
         _products.add(a);
-        a.getNotification().setInterestedClients(getAllClients());
+        _interestedClients.put(a, _clients);
         return;
       }
     }
@@ -113,11 +108,13 @@ public class Store implements Serializable {
   public void registerBook(String id, String title, String author, String isbn, String idSupplier, int price, int criticalValue) throws UnknownSupplierException, InvalidPriceException{
 
     Supplier s = getSupplier(idSupplier);
+
     if (price < 0)
       throw new InvalidPriceException("Price must be an Integer positive.");
+
     Book a = new Book(id, price, criticalValue, s, title, author, isbn);
     _products.add(a);
-    a.getNotification().setInterestedClients(getAllClients());
+    _interestedClients.put(a, _clients);
   }
 
   public void registerContainer(String id, int price, int criticalValue, String idSupplier, String servType, String servLevel) throws UnknownTypeException, UnknownLevelException, UnknownSupplierException, InvalidPriceException {
@@ -129,20 +126,15 @@ public class Store implements Serializable {
       throw new InvalidPriceException("Price must be an Integer positive.");
 
     for (serviceType i : serviceType.values())
-
       if (servType == i.toString())
-
         EXISTS = 1;
 
     if (EXISTS == 1){
-
       for (serviceLevel j : serviceLevel.values())
-
         if (servLevel.equals(j.toString())) {
-
           Container a = new Container(id, price, criticalValue, s, servType, servLevel);
           _products.add(a);
-          a.getNotification().setInterestedClients(getAllClients());
+          _interestedClients.put(a, _clients);
           return;
         }
       throw new UnknownLevelException("That service level does not exist.");
@@ -151,15 +143,59 @@ public class Store implements Serializable {
   }
 
   public void registerSale(String cid, int deadline, String pid, int amount) throws UnknownClientException, UnknownProductException, DeniedSaleException {
+    
     Client c = getClient(cid);
     Product p = getProduct(pid);
+
+    // check if is there sufficient product to sell
     if (p.getStock() - amount < 0)
-      throw new DeniedSaleException("Not enough stock!");
+     throw new DeniedSaleException("Not enough stock!");
+
+     // update stock
+    p.removeStock(amount);
+
+    // store the sale
+    Sale s = new Sale(c, deadline, p, amount);
+    if (_sales.containsKey(cid))
+      _sales.get(cid).add(s);
     else {
-      Sale s = new Sale(c, deadline, p, amount);
-      _transactions.add(s);
-      // update saldo contabilistico !!!!!!!!
+      List<Sale> t = new ArrayList<Sale>();
+      t.add(s);
+      _sales.put(cid, t);
     }
+
+    // update contabilistic balance
+    
+  }
+
+  public void registerOrder(String sid, TreeMap<Product, Integer> products) throws UnknownSupplierException, WrongSupException, UnauthorizedSupException {
+    Supplier s = getSupplier(sid);
+    // check if is authorized and the correct one
+    if (s.isAuthorized()) {
+      for (Map.Entry<Product, Integer> e : products.entrySet()) {
+        if (e.getKey().getSupplier() != s)
+          throw new WrongSupException(e.getKey(), "This product does not belong to this supplier.");
+      }
+      // store the order
+      Order o = new Order(s, products, _date);
+      if (_orders.containsKey(sid))
+        _orders.get(sid).add(o);
+      else {
+        List<Order> t = new ArrayList<Order>();
+        t.add(o);
+        _orders.put(sid, t);
+      }
+      // update available balance
+      _availableBalance -= o.getTotalCost();
+      // update stock and send notification if necessary
+      for (Product p : _products) {
+        if (products.containsKey(p))
+          if (p.getStock() == 0)
+            sendNotification("NEW", p, p.getPrice());
+          p.addStock(products.get(p));
+      } 
+    }
+    throw new UnauthorizedSupException("This supplier is not authorized for transactions.");
   }
 
   /////////////////////////////////////////////// GETTERS FUNCTIONS //////////////////////////////////////////////////////
@@ -215,38 +251,68 @@ public class Store implements Serializable {
    * @throws UnknownProductException
    */
   public Product getProduct(String id) throws UnknownProductException{
-    
     for (Product p : _products)
-
       if (p.getId().equals(id))
-
         return p;
-    
-    throw new UnknownProductException("That product does not exist.");
+    throw new UnknownProductException(id, "That product does not exist.");
   }
 
   public int getProductStock(String id) {
     for (Product p : _products)
       if (p.getId().equals(id))
         return p.getStock();
-    return 0;
+    return -1;
   }
 
   public Transaction getTransaction(int id) throws UnknownTransactionException {
-    for (Transaction t : _transactions) {
-      if (t.getId() == id)
-        return t;
+    for (Map.Entry<String, List<Order>> e : _orders.entrySet()) {
+      for (Order t : e.getValue())
+        if (t.getId() == id)
+          return t;
+    }
+    for (Map.Entry<String, List<Sale>> e : _sales.entrySet()) {
+      for (Sale t : e.getValue())
+        if (t.getId() == id)
+          return t;
     }
     throw new UnknownTransactionException("That transaction does not exists.");
   }
 
-  public String getTProductName(int id) {
-    for (Transaction t : _transactions)
-      if (t.getId() == id)
-        return t.getProduct().getId();
-    return null;
+  public List<Order> getAllSupplierTransactions(String id) { return _orders.get(id); }
+
+  public Sale getSale(int id) throws UnknownTransactionException {
+    for (Map.Entry<String, List<Sale>> e : _sales.entrySet()) {
+      for (Sale t : e.getValue())
+        if (t.getId() == id)
+          return t;
+    }
+    throw new UnknownTransactionException("This sale does not exists!");
   }
 
+  public List<Sale> getAllClientTransactions(String id) { return _sales.get(id); }
+
+  public List<Sale> getPaidSales(String id) {
+    List<Sale> paidSales = new ArrayList<Sale>();
+    for (Sale s : _sales.get(id))
+      if (s.wasPaid())
+        paidSales.add(s);
+    return paidSales;
+  }
+
+  public List<Product> getProductsUnderLimitOf(int price) {
+    List<Product> underlimit = new ArrayList<Product>();
+    for (Product p : _products)
+      if (p.getPrice() < price)
+        underlimit.add(p);
+    return underlimit;
+  }
+
+  public double getAvailableBalance() { return _availableBalance; }
+
+  public double getAccountingBalance() {
+    updateAccountingBalance();
+    return _accountingBalance;
+  }
   /////////////////////////////////////////////// PARSING FUNCTIONS ////////////////////////////////////////////////////
   /**
    * @param id of the box
@@ -273,7 +339,7 @@ public class Store implements Serializable {
         Box a = new Box(id, price, criticalValue, s, servType);
         a.addStock(stock);
         _products.add(a);
-        a.getNotification().setInterestedClients(getAllClients());
+        _interestedClients.put(a, _clients);
         return;
       }
     }
@@ -297,13 +363,12 @@ public class Store implements Serializable {
     Supplier s = getSupplier(idSupplier);
 
     if (price < 0)
-
       throw new InvalidPriceException("Price must be an Integer positive.");
 
     Book a = new Book(id, price, criticalValue, s, title, author, isbn);
     a.addStock(stock);
     _products.add(a);
-    a.getNotification().setInterestedClients(getAllClients());
+    _interestedClients.put(a, _clients);
   }
 
   /**
@@ -341,7 +406,7 @@ public class Store implements Serializable {
           Container a = new Container(id, price, criticalValue, s, servType, servLevel);
           a.addStock(stock);
           _products.add(a);
-          a.getNotification().setInterestedClients(getAllClients());
+          _interestedClients.put(a, _clients);
           return;
         }
       throw new UnknownLevelException("That service level does not exist.");
@@ -356,7 +421,8 @@ public class Store implements Serializable {
    */
   public void advanceDate(int numberOfDays) throws InvalidCoreDateException{
 
-    if (numberOfDays < 0) throw new InvalidCoreDateException("Date must be a positive number.");
+    if (numberOfDays < 0) 
+      throw new InvalidCoreDateException("Date must be a positive number.");
     _date += numberOfDays;
   }
 
@@ -369,15 +435,13 @@ public class Store implements Serializable {
     if (price < 0) 
       throw new InvalidPriceException("Price must be an integer positive.");
 
-    for (Product i : _products) {
-
-      if (i.getId().equals(id)) {
-        if (i.getPrice() > price) 
-          sendNotification("BARGAIN", id, price);
-        i.changePrice(price);
+    for (Product p : _products)
+      if (p.getId().equals(id)) {
+        if (p.getPrice() > price)
+          sendNotification("BARGAIN", p, price);
+        p.changePrice(price);
       }
-    }
-    throw new UnknownProductException("That product does not exist.");
+    throw new UnknownProductException(id, "That product does not exist.");
   }
 
   public void clearClientNotifications(String id) throws UnknownClientException {
@@ -391,36 +455,77 @@ public class Store implements Serializable {
    * @throws BadEntryException
    * @throws ImportFileException
    */
-  public void sendNotification(String description, String idProduct, int price) throws UnknownProductException{
-
-    Notification n = getProduct(idProduct).getNotification();
-    n.sendNotification(description, idProduct, price);
+  public void sendNotification(String description, Product product, int price) {
+    if (_interestedClients.containsKey(product)) {
+      Notification n = new Notification(product, description, price);
+      for (Client c : _interestedClients.get(product))
+        c.addNotification(n);
+      _notifications.add(n);
+    }
   }
 
   public void pay(int id) throws UnknownTransactionException, UnknownProductException {
 
-    Sale t = (Sale) getTransaction(id);
-    Product p = t.getProduct();
+    Sale s = getSale(id);
+    Product p = s.getProduct();
 
     switch(p.getNameMode()) {
       case "BookMode":
-        t.setMode(new BookMode());
+        s.setMode(new BookMode());
         break;
       case "BoxMode":
-        t.setMode(new BoxMode());
+        s.setMode(new BoxMode());
         break;
       case "ContainerMode":
-        t.setMode(new ContainerMode());
+        s.setMode(new ContainerMode());
         break;
       default:
-        throw new UnknownProductException("This product does not exists.");
+        throw new UnknownProductException(p.getId(), "This product does not exists.");
     }
-    double toPay = t.pay();
+    double toPay = s.pay();
     _availableBalance += toPay;
-    
   }
 
-  // FIXME define methods
+  public boolean toggleTransactions(String id) throws UnknownSupplierException {
+    Supplier s = getSupplier(id);
+    s.toggleAuthorization();
+    if (s.isAuthorized())
+      return true;
+    return false;
+  }
+
+  public boolean toggleNotifications(String clientID, String productID) throws UnknownClientException, UnknownProductException {
+    Client c = getClient(clientID);
+    Product p = getProduct(productID);
+    if (_interestedClients.get(p).contains(c)) {
+      _interestedClients.get(p).remove(c);
+      return true;
+    }
+    _interestedClients.get(p).add(c);
+    return false;
+  }
+
+  public void updateAccountingBalance() {
+
+    double counter = 0;
+
+    for (Map.Entry<String, List<Sale>> e : _sales.entrySet()) {
+      for(Sale s : e.getValue()) {
+        if (s.wasPaid())
+          counter += s.getToPayValue();
+        else 
+          counter += s.computePayment(s.getClient(), s.getBaseValue(), _date, s.getDeadline());
+      }
+    }
+
+    for (Map.Entry<String, List<Order>> e : _orders.entrySet()) {
+      for (Order o : e.getValue()) {
+        counter -= o.getTotalCost();
+      }
+    }
+
+    _accountingBalance = counter;
+  }
 
   /**
    * @param txtfile filename to be loaded.

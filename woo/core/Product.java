@@ -2,7 +2,7 @@ package woo.core;
 
 import java.io.*;
 
-public abstract class Product implements Serializable{
+public abstract class Product implements Serializable, Comparable<Product>{
 
     /**
      *
@@ -14,7 +14,6 @@ public abstract class Product implements Serializable{
     private int _price;
     private int _criticalValue;
     private int _stock;
-    private Notification _notification;
 
     public Product(String id, int price, int criticalValue, Supplier s) {
 
@@ -22,8 +21,6 @@ public abstract class Product implements Serializable{
         _price = price;
         _criticalValue = criticalValue;
         _supplier = s;
-        _notification = new Notification(this);
-
     }
 
 /////////////////////////////////////////////// GETTERS FUNCTIONS ////////////////////////////////////////////////////
@@ -33,8 +30,7 @@ public abstract class Product implements Serializable{
     public Supplier getSupplier() { return _supplier; }
     public int getCriticalValue() { return _criticalValue; }
     public int getStock() {return _stock; }
-    public Notification getNotification() { return _notification; }
-    public String getNameMode() { return this.getClass().getSimpleName() + "Mode"; }
+    public abstract String getNameMode();
 
 /////////////////////////////////////////////// OTHER FUNCTIONS ////////////////////////////////////////////////////
 
@@ -45,6 +41,15 @@ public abstract class Product implements Serializable{
     public void addStock(int stock) {
         _stock += stock;
     }
+
+    public void removeStock(int i) {
+        _stock -= i;
+    }
+
     public abstract String toString();
-            
+    
+    @Override
+    public int compareTo(Product obj) {
+        return _id.compareTo(obj._id);
+    }
 }
